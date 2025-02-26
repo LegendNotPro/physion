@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Physics Simulation Suite</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background-color: #222;
+      color: white;
+    }
+    #canvas {
+      display: block;
+      background-color: #111;
+    }
+    .controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      max-width: 300px;
+    }
+    .menu {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(0, 0, 0, 0.8);
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      max-width: 600px;
+    }
+    .menu-button {
+      margin: 10px;
+      padding: 15px 30px;
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s, transform 0.2s;
+      width: 250px;
+    }
+    .menu-button:hover {
+      background-color: #45a049;
+      transform: scale(1.05);
+    }
+    .slider-container {
+      margin: 10px 0;
+    }
+    label {
+      display: inline-block;
+      width: 120px;
+    }
+    button {
+      margin: 5px;
+      padding: 5px 10px;
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .back-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #f44336;
+    }
+    .back-button:hover {
+      background-color: #d32f2f;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  
+  <!-- Main Menu -->
+  <div id="mainMenu" class="menu">
+    <h1>Physics Simulation Suite</h1>
+    <p>Choose a simulation to explore</p>
+    <button id="particleBtn" class="menu-button">Particle Gravity & Temperature</button>
+    <button id="pendulumBtn" class="menu-button">Interactive Pendulum</button>
+    <button id="waveBtn" class="menu-button">Wave Propagation</button>
+  </div>
+
+  <!-- Particle Controls -->
+  <div id="particleControls" class="controls hidden">
+    <h3>Particle Simulation Controls</h3>
+    
+    <div class="slider-container">
+      <label for="gravity">Gravity:</label>
+      <input type="range" id="gravity" min="0" max="1" step="0.01" value="0.1">
+      <span id="gravityValue">0.1</span>
+    </div>
+    
+    <div class="slider-container">
+      <label for="temperature">Temperature:</label>
+      <input type="range" id="temperature" min="0" max="2" step="0.01" value="0.5">
+      <span id="temperatureValue">0.5</span>
+    </div>
+    
+    <div class="slider-container">
+      <label for="particles">Particles:</label>
+      <input type="range" id="particles" min="10" max="500" step="10" value="200">
+      <span id="particlesValue">200</span>
+    </div>
+    
+    <button id="resetParticlesBtn">Reset Simulation</button>
+    <button class="back-button">Back to Menu</button>
+  </div>
+
+  <!-- Pendulum Controls -->
+  <div id="pendulumControls" class="controls hidden">
+    <h3>Pendulum Simulation Controls</h3>
+    
+    <div class="slider-container">
+      <label for="pendulumLength">Length:</label>
+      <input type="range" id="pendulumLength" min="50" max="300" step="1" value="150">
+      <span id="pendulumLengthValue">150</span>
+    </div>
+    
+    <div class="slider-container">
+      <label for="pendulumGravity">Gravity:</label>
+      <input type="range" id="pendulumGravity" min="0.1" max="2" step="0.05" value="0.5">
+      <span id="pendulumGravityValue">0.5</span>
+    </div>
+    
+    <div class="slider-container">
+      <label for="pendulumFriction">Friction:</label>
+      <input type="range" id="pendulumFriction" min="0" max="0.1" step="0.001" value="0.01">
+      <span id="pendulumFrictionValue">0.01</span>
+    </div>
+    
+    <p>Click and drag to interact with pendulum</p>
+    <button id="resetPendulumBtn">Reset Simulation</button>
+    <button class="back-button">Back to Menu</button>
+  </div>
+
+  <!-- Wave Controls -->
+  <div id="waveControls" class="controls hidden">
+    <h3>Wave Simulation Controls</h3>
+    
+    <div class="slider-container">
+      <label for="waveFrequency">Frequency:</label>
+      <input type="range" id="waveFrequency" min="0.01" max="0.2" step="0.01" value="0.05">
+      <span id="waveFrequencyValue">0.05</span>
+    </div>
+    
+    <div class="slider-container">
+      <label for="waveAmplitude">Amplitude:</label>
+      <input type="range" id="waveAmplitude" min="5" max="50" step="1" value="20">
+      <span id="waveAmplitudeValue">20</span>
+    </div>
+    
+    <div class="slider-container">
+      <label for="waveDamping">Damping:</label>
+      <input type="range" id="waveDamping" min="0.9" max="0.999" step="0.001" value="0.98">
+      <span id="waveDampingValue">0.98</span>
+    </div>
+    
+    <p>Move cursor to create waves</p>
+    <button id="resetWaveBtn">Reset Simulation</button>
+    <button class="back-button">Back to Menu</button>
+  </div>
+
+  <script>
+    // Initialize canvas
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Set canvas to full window size
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    
+    // UI elements
+    const mainMenu = document.getElementById('mainMenu');
+    const particleControls = document.getElementById('particleControls');
+    const pendulumControls = document.getElementById('pendulumControls');
+    const waveControls = document.getElementById('waveControls');
+    
+    // Buttons
+    const particleBtn = document.getElementById('particleBtn');
+    const pendulumBtn = document.getElementById('pendulumBtn');
+    const waveBtn = document.getElementById('waveBtn');
+    const backButtons = document.querySelectorAll('.back-button');
+    
+    // Current simulation state
+    let currentSimulation = null;
+    let animationId = null;
+    
+    // Mouse position
+    let mouseX = 0;
+    let mouseY = 0;
+    let mousePressed = false;
+    
+    // Track mouse position
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouseX = e.clientX - rect.left;
+      mouseY = e.clientY - rect.top;
+    });
+    
+    canvas.addEventListener('mousedown', () => {
+      mousePressed = true;
+    });
+    
+    canvas.addEventListener('mouseup', () => {
+      mousePressed = false;
+    });
+    
+    canvas.addEventListener('mouseleave', () => {
+      mousePressed = false;
+    });
+    
+    // Show the main menu
+    function showMainMenu() {
+      // Stop the current animation frame
+      if (animationId !== null) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+      
+      // Reset canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Show menu, hide all controls
+      mainMenu.classList.remove('hidden');
+      particleControls.classList.add('hidden');
+      pendulumControls.classList.add('hidden');
+      waveControls.classList.add('hidden');
+      
+      // Reset current simulation
+      currentSimulation = null;
+    }
+    
+    // Back button event listeners
+    backButtons.forEach(button => {
+      button.addEventListener('click', showMainMenu);
+    });
+    
+    //=============================================
+    // PARTICLE SIMULATION
+    //=============================================
+    
+    // Particle class
+    class Particle {
+      constructor(x, y) {
+        this.x = x || Math.random() * canvas.width;
+        this.y = y || Math.random() * canvas.height / 2;
+        this.vx = (Math.random() - 0.5) * 2;
+        this.vy = (Math.random() - 0.5) * 2;
+        this.radius = Math.random() * 3 + 1;
+        this.color = `hsl(${Math.random() * 60 + 200}, 80%, 50%)`;
+        this.mass = this.radius;
+      }
+      
+      update(gravity, temperature) {
+        // Apply gravity
+        this.vy += gravity * this.mass;
+        
+        // Apply random movement based on temperature
+        this.vx += (Math.random() - 0.5) * temperature;
+        this.vy += (Math.random() - 0.5) * temperature;
+        
+        // Update position
+        this.x += this.vx;
+        this.y += this.vy;
+        
+        // Bounce off walls with energy loss
+        if (this.x < this.radius) {
+          this.x = this.radius;
+          this.vx *= -0.8;
+        }
+        if (this.x > canvas.width - this.radius) {
+          this.x = canvas.width - this.radius;
+          this.vx *= -0.8;
+        }
+        if (this.y < this.radius) {
+          this.y = this.radius;
+          this.vy *= -0.8;
+        }
+        if (this.y > canvas.height - this.radius) {
+          this.y = canvas.height - this.radius;
+          this.vy *= -0.8;
+        }
+        
+        // Color based on velocity (kinetic energy)
+        const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        this.color = `hsl(${200 + speed * 20}, 80%, 50%)`;
+      }
+      
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+      }
+    }
+    
+    // Particle simulation variables
+    let particles = [];
+    let gravity = 0.1;
+    let temperature = 0.5;
+    let particleCount = 200;
+    
+    // Initialize particles
+    function initParticles() {
+      particles = [];
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
+      }
+    }
+    
+    // Particle simulation loop
+    function runParticleSimulation() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Update and draw particles
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].update(gravity, temperature);
+        particles[i].draw();
+      }
+      
+      // Continue the animation loop if this is the current simulation
+      if (currentSimulation === 'particles') {
+        animationId = requestAnimationFrame(runParticleSimulation);
+      }
+    }
+    
+    // Particle controls setup
+    const gravitySlider = document.getElementById('gravity');
+    const temperatureSlider = document.getElementById('temperature');
+    const particlesSlider = document.getElementById('particles');
+    const resetParticlesBtn = document.getElementById('resetParticlesBtn');
+    
+    const gravityValue = document.getElementById('gravityValue');
+    const temperatureValue = document.getElementById('temperatureValue');
+    const particlesValue = document.getElementById('particlesValue');
+    
+    gravitySlider.addEventListener('input', () => {
+      gravity = parseFloat(gravitySlider.value);
+      gravityValue.textContent = gravity.toFixed(2);
+    });
+    
+    temperatureSlider.addEventListener('input', () => {
+      temperature = parseFloat(temperatureSlider.value);
+      temperatureValue.textContent = temperature.toFixed(2);
+    });
+    
+    particlesSlider.addEventListener('input', () => {
+      particleCount = parseInt(particlesSlider.value);
+      particlesValue.textContent = particleCount;
+      initParticles();
+    });
+    
+    resetParticlesBtn.addEventListener('click', initParticles);
+    
+    // Start particle simulation
+    particleBtn.addEventListener('click', () => {
+      // Cancel any existing animation
+      if (animationId !== null) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+      
+      mainMenu.classList.add('hidden');
+      particleControls.classList.remove('hidden');
+      currentSimulation = 'particles';
+      initParticles();
+      animationId = requestAnimationFrame(runParticleSimulation);
+    });
+    
+    //=============================================
+    // PENDULUM SIMULATION
+    //=============================================
+    
+    // Pendulum class
+    class Pendulum {
+      constructor() {
+        this.length = 150;
+        this.anchorX = canvas.width / 2;
+        this.anchorY = canvas.height / 3;
+        this.angle = Math.PI / 4;
+        this.angleVelocity = 0;
+        this.angleAcceleration = 0;
+        this.bobRadius = 20;
+        this.gravity = 0.5;
+        this.friction = 0.01;
+        this.grabbed = false;
+      }
+      
+      update() {
+        if (this.grabbed) {
+          // Calculate angle based on mouse position
+          const dx = mouseX - this.anchorX;
+          const dy = mouseY - this.anchorY;
+          this.angle = Math.atan2(dy, dx);
+          
+          // Reset velocity when grabbing
+          this.angleVelocity = 0;
+        } else {
+          // Calculate forces
+          this.angleAcceleration = (-this.gravity / this.length) * Math.sin(this.angle);
+          
+          // Apply forces
+          this.angleVelocity += this.angleAcceleration;
+          this.angleVelocity *= (1 - this.friction);
+          this.angle += this.angleVelocity;
+        }
+        
+        // Calculate bob position
+        this.bobX = this.anchorX + this.length * Math.sin(this.angle);
+        this.bobY = this.anchorY + this.length * Math.cos(this.angle);
+        
+        // Check if mouse is over bob
+        const dx = mouseX - this.bobX;
+        const dy = mouseY - this.bobY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < this.bobRadius && mousePressed) {
+          this.grabbed = true;
+        } else if (!mousePressed) {
+          this.grabbed = false;
+        }
+      }
+      
+      draw() {
+        // Draw string
+        ctx.beginPath();
+        ctx.moveTo(this.anchorX, this.anchorY);
+        ctx.lineTo(this.bobX, this.bobY);
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Draw anchor
+        ctx.beginPath();
+        ctx.arc(this.anchorX, this.anchorY, 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#888';
+        ctx.fill();
+        
+        // Draw bob
+        ctx.beginPath();
+        ctx.arc(this.bobX, this.bobY, this.bobRadius, 0, Math.PI * 2);
+        const hue = 220 + Math.abs(this.angleVelocity) * 100;
+        ctx.fillStyle = this.grabbed ? 'orange' : `hsl(${hue}, 70%, 60%)`;
+        ctx.fill();
+      }
+      
+      reset() {
+        this.angle = Math.PI / 4;
+        this.angleVelocity = 0;
+        this.angleAcceleration = 0;
+      }
+    }
+    
+    // Create pendulum
+    let pendulum = new Pendulum();
+    
+    // Pendulum simulation loop
+    function runPendulumSimulation() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      pendulum.update();
+      pendulum.draw();
+      
+      // Continue the animation loop if this is the current simulation
+      if (currentSimulation === 'pendulum') {
+        animationId = requestAnimationFrame(runPendulumSimulation);
+      }
+    }
+    
+    // Pendulum controls setup
+    const pendulumLengthSlider = document.getElementById('pendulumLength');
+    const pendulumGravitySlider = document.getElementById('pendulumGravity');
+    const pendulumFrictionSlider = document.getElementById('pendulumFriction');
+    const resetPendulumBtn = document.getElementById('resetPendulumBtn');
+    
+    const pendulumLengthValue = document.getElementById('pendulumLengthValue');
+    const pendulumGravityValue = document.getElementById('pendulumGravityValue');
+    const pendulumFrictionValue = document.getElementById('pendulumFrictionValue');
+    
+    pendulumLengthSlider.addEventListener('input', () => {
+      pendulum.length = parseInt(pendulumLengthSlider.value);
+      pendulumLengthValue.textContent = pendulum.length;
+    });
+    
+    pendulumGravitySlider.addEventListener('input', () => {
+      pendulum.gravity = parseFloat(pendulumGravitySlider.value);
+      pendulumGravityValue.textContent = pendulum.gravity.toFixed(2);
+    });
+    
+    pendulumFrictionSlider.addEventListener('input', () => {
+      pendulum.friction = parseFloat(pendulumFrictionSlider.value);
+      pendulumFrictionValue.textContent = pendulum.friction.toFixed(3);
+    });
+    
+    resetPendulumBtn.addEventListener('click', () => pendulum.reset());
+    
+    // Start pendulum simulation
+    pendulumBtn.addEventListener('click', () => {
+      // Cancel any existing animation
+      if (animationId !== null) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+      
+      mainMenu.classList.add('hidden');
+      pendulumControls.classList.remove('hidden');
+      currentSimulation = 'pendulum';
+      
+      // Create a new pendulum to ensure it's centered properly
+      pendulum = new Pendulum();
+      
+      animationId = requestAnimationFrame(runPendulumSimulation);
+    });
+    
+    //=============================================
+    // WAVE SIMULATION
+    //=============================================
+    
+    // Wave simulation variables
+    let wavePoints = [];
+    let waveFrequency = 0.05;
+    let waveAmplitude = 20;
+    let waveDamping = 0.98;
+    let prevMouseX = 0;
+    let prevMouseY = 0;
+    
+    // Initialize wave points
+    function initWaves() {
+      wavePoints = [];
+      const pointCount = Math.floor(canvas.width / 5);
+      
+      for (let i = 0; i < pointCount; i++) {
+        wavePoints.push({
+          x: i * 5,
+          y: canvas.height / 2,
+          vy: 0
+        });
+      }
+      
+      prevMouseX = 0;
+      prevMouseY = 0;
+    }
+    
+    // Wave simulation loop
+    function runWaveSimulation() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Check if cursor moved significantly
+      if (Math.abs(mouseX - prevMouseX) > 5 || Math.abs(mouseY - prevMouseY) > 5) {
+        // Find closest point to cursor
+        let closestIndex = 0;
+        let closestDist = 9999;
+        
+        for (let i = 0; i < wavePoints.length; i++) {
+          const dx = wavePoints[i].x - mouseX;
+          const dy = wavePoints[i].y - mouseY;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          
+          if (dist < closestDist) {
+            closestDist = dist;
+            closestIndex = i;
+          }
+        }
+        
+        // Apply force to closest point and neighbors
+        if (closestDist < 100) {
+          const force = (mouseY - prevMouseY) * waveAmplitude * 0.01;
+          const radius = 3;
+          
+          for (let i = Math.max(0, closestIndex - radius); i <= Math.min(wavePoints.length - 1, closestIndex + radius); i++) {
+            const distance = Math.abs(i - closestIndex);
+            const factor = (radius - distance) / radius;
+            wavePoints[i].vy += force * factor;
+          }
+        }
+        
+        prevMouseX = mouseX;
+        prevMouseY = mouseY;
+      }
+      
+      // Update wave physics
+      for (let i = 0; i < wavePoints.length; i++) {
+        const point = wavePoints[i];
+        
+        // Apply wave physics
+        point.y += point.vy;
+        point.vy *= waveDamping;
+        
+        // Apply constraints
+        if (point.y < 0) {
+          point.y = 0;
+          point.vy *= -0.5;
+        } else if (point.y > canvas.height) {
+          point.y = canvas.height;
+          point.vy *= -0.5;
+        }
+      }
+      
+      // Connect waves with neighbor points
+      for (let i = 0; i < wavePoints.length; i++) {
+        const left = i > 0 ? wavePoints[i - 1] : null;
+        const right = i < wavePoints.length - 1 ? wavePoints[i + 1] : null;
+        const current = wavePoints[i];
+        
+        if (left && right) {
+          const targetY = (left.y + right.y) / 2;
+          const vy = (targetY - current.y) * waveFrequency;
+          current.vy += vy;
+        }
+      }
+      
+      // Draw wave
+      ctx.beginPath();
+      ctx.moveTo(0, wavePoints[0].y);
+      
+      for (let i = 0; i < wavePoints.length - 1; i++) {
+        const current = wavePoints[i];
+        const next = wavePoints[i + 1];
+        
+        // Use a curve between points for smoother look
+        const cpx = (current.x + next.x) / 2;
+        const cpy = (current.y + next.y) / 2;
+        ctx.quadraticCurveTo(current.x, current.y, cpx, cpy);
+      }
+      
+      // Connect to bottom corners to make a filled shape
+      ctx.lineTo(canvas.width, canvas.height);
+      ctx.lineTo(0, canvas.height);
+      ctx.closePath();
+      
+      // Create gradient fill for wave
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, 'rgba(0, 150, 255, 0.8)');
+      gradient.addColorStop(1, 'rgba(0, 50, 100, 0.4)');
+      
+      ctx.fillStyle = gradient;
+      ctx.fill();
+      
+      // Draw wave line on top
+      ctx.beginPath();
+      ctx.moveTo(wavePoints[0].x, wavePoints[0].y);
+      
+      for (let i = 1; i < wavePoints.length; i++) {
+        const point = wavePoints[i];
+        ctx.lineTo(point.x, point.y);
+      }
+      
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      // Continue the animation loop if this is the current simulation
+      if (currentSimulation === 'wave') {
+        animationId = requestAnimationFrame(runWaveSimulation);
+      }
+    }
+    
+    // Wave controls setup
+    const waveFrequencySlider = document.getElementById('waveFrequency');
+    const waveAmplitudeSlider = document.getElementById('waveAmplitude');
+    const waveDampingSlider = document.getElementById('waveDamping');
+    const resetWaveBtn = document.getElementById('resetWaveBtn');
+    
+    const waveFrequencyValue = document.getElementById('waveFrequencyValue');
+    const waveAmplitudeValue = document.getElementById('waveAmplitudeValue');
+    const waveDampingValue = document.getElementById('waveDampingValue');
+    
+    waveFrequencySlider.addEventListener('input', () => {
+      waveFrequency = parseFloat(waveFrequencySlider.value);
+      waveFrequencyValue.textContent = waveFrequency.toFixed(2);
+    });
+    
+    waveAmplitudeSlider.addEventListener('input', () => {
+      waveAmplitude = parseInt(waveAmplitudeSlider.value);
+      waveAmplitudeValue.textContent = waveAmplitude;
+    });
+    
+    waveDampingSlider.addEventListener('input', () => {
+      waveDamping = parseFloat(waveDampingSlider.value);
+      waveDampingValue.textContent = waveDamping.toFixed(3);
+    });
+    
+    resetWaveBtn.addEventListener('click', initWaves);
+    
+    // Start wave simulation
+    waveBtn.addEventListener('click', () => {
+      // Cancel any existing animation
+      if (animationId !== null) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+      
+      mainMenu.classList.add('hidden');
+      waveControls.classList.remove('hidden');
+      currentSimulation = 'wave';
+      
+      // Re-initialize the waves to ensure they fit the current canvas size
+      initWaves();
+      
+      animationId = requestAnimationFrame(runWaveSimulation);
+    });
+    
+    // Handle window resize for all simulations
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      
+      // Reinitialize simulations based on current one
+      if (currentSimulation === 'particles') {
+        initParticles();
+      } else if (currentSimulation === 'pendulum') {
+        pendulum = new Pendulum();
+      } else if (currentSimulation === 'wave') {
+        initWaves();
+      }
+    });
+  </script>
+</body>
+</html>
